@@ -1,12 +1,21 @@
 package top.alphaship.trade.job;
 
+import com.huobi.constant.enums.CandlestickIntervalEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import top.alphaship.trade.huobi.HuoBiContractService;
+import top.alphaship.trade.huobi.HuoBiMarketService;
 
 @Slf4j
 @Component
 public class HuoBiJob {
+
+    @Autowired
+    private HuoBiMarketService huoBiMarketService;
+    @Autowired
+    private HuoBiContractService huoBiContractService;
 
     /**
      * 每分钟执行一次
@@ -23,7 +32,8 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 */15 * * * ?")
     public void processByFifteenMinute() {
-        log.info("15分钟的");
+        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.MIN15, 130);
+        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.MIN15, 130);
     }
 
 
@@ -32,7 +42,8 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 */1 * * ?")
     public void processByOneHour() {
-        log.info("1小时的");
+        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.MIN60, 130);
+        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.MIN60, 130);
     }
 
 
@@ -41,7 +52,8 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 */4 * * ?")
     public void processByFourHour() {
-        log.info("4小时的");
+        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.HOUR4, 130);
+        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.HOUR4, 130);
     }
 
 
@@ -50,7 +62,8 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void processByOneDay() {
-        log.info("1天的");
+        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.DAY1, 130);
+        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.DAY1, 130);
     }
 
 

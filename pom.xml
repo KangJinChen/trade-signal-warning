@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>top.alphaship</groupId>
-    <artifactId>cryptocurrency-monitor</artifactId>
+    <artifactId>trade-signal-warning</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>cryptocurrency-monitor</name>
-    <description>Demo project for Spring Boot</description>
+    <name>trade-signal-warning</name>
+    <description>send trade signal warning</description>
     <properties>
         <java.version>1.8</java.version>
     </properties>
@@ -21,10 +21,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -44,10 +44,23 @@
         </dependency>
 
         <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.62</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.huobi.linear.swap.api</groupId>
+            <artifactId>huobi-linear-swap-api</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.huobi.sdk</groupId>
             <artifactId>huobi-client</artifactId>
             <version>2.0.3-SNAPSHOT</version>
         </dependency>
+
     </dependencies>
 
     <build>

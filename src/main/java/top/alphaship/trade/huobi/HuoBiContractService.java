@@ -11,10 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.alphaship.trade.bot.BasicTemplate;
 import top.alphaship.trade.bot.DingDingHelper;
+import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
+import top.alphaship.trade.helper.WarningHelper;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,79 +49,38 @@ public class HuoBiContractService {
         return response.getData();
     }
 
-    /**
-     * 计算平均移动均线
-     */
-    public BigDecimal calcSma(List<SwapMarketHistoryKlineResponse.DataBean> KLines) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (SwapMarketHistoryKlineResponse.DataBean KLine : KLines) {
-            sum = sum.add(KLine.getClose());
-        }
-        BigDecimal smaValue = sum.divide(BigDecimal.valueOf(KLines.size()), RoundingMode.HALF_DOWN);
-        log.info("sma: {}", smaValue);
-        return smaValue;
-    }
 
 
-    /**
-     * 上穿sma
-     */
-    public boolean crossover(List<SwapMarketHistoryKlineResponse.DataBean> KLines) {
-        BigDecimal latestClose = KLines.get(0).getClose();
-        BigDecimal previewOpen = KLines.get(1).getOpen();
-        BigDecimal previewClose = KLines.get(1).getClose();
 
-        BigDecimal sma = calcSma(KLines);
-
-        if ((previewOpen.compareTo(sma) < 0 && previewClose.compareTo(sma) > 0) && latestClose.compareTo(sma) > 0) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 下穿sma
-     */
-    public boolean crossunder(List<SwapMarketHistoryKlineResponse.DataBean> KLines) {
-
-        BigDecimal latestClose = KLines.get(0).getClose();
-        BigDecimal previewOpen = KLines.get(1).getOpen();
-        BigDecimal previewClose = KLines.get(1).getClose();
-
-        BigDecimal sma = calcSma(KLines);
-
-        if ((previewOpen.compareTo(sma) > 0 && previewClose.compareTo(sma) < 0) && latestClose.compareTo(sma) < 0) {
-            return true;
-        }
-        return false;
-    }
-
-
-    public void monitorShortSignal(CandlestickIntervalEnum period, int size) {
+    public void monitoringSignal(CandlestickIntervalEnum period, int size) {
         List<String> allContract = getAllContract();
-        for (String contractCode: allContract) {
-            List<SwapMarketHistoryKlineResponse.DataBean> kLines = getKLine(contractCode, period, size);
+        monitoringSignal(allContract, period, size);
+    }
 
+    public void monitoringSignal(List<String> contracts, CandlestickIntervalEnum period, int size) {
+        for (String contractCode: contracts) {
+            List<SwapMarketHistoryKlineResponse.DataBean> kLines = getKLine(contractCode, period, size);
             //消息模板
             BasicTemplate basicTemplate = new BasicTemplate();
             basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
             basicTemplate.setPair(contractCode);
             basicTemplate.setCycleTime(period.getCode());
-            basicTemplate.setType("合约");
 
-            if (crossover(kLines)) {
+            List<BigDecimal> prices = kLines.stream().map(SwapMarketHistoryKlineResponse.DataBean::getClose).collect(Collectors.toList());
+
+            if (WarningHelper.MacdWarning(prices) == 1) {
                 //做多
-                log.info("合约：{} 做多", contractCode);
+                log.info("合约：{} 看涨", contractCode);
                 basicTemplate.setDirection(DirectionConstant.LONG.getText());
                 //发送钉钉
-                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null);
+                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.CONTRACT);
             }
-            if (crossunder(kLines)) {
+            if (WarningHelper.MacdWarning(prices) == 2) {
                 //做空
-                log.info("合约：{} 做空", contractCode);
+                log.info("合约：{} 看跌", contractCode);
                 basicTemplate.setDirection(DirectionConstant.SHORT.getText());
                 //发送钉钉
-                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null);
+                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.CONTRACT);
 
             }
         }
@@ -128,6 +88,6 @@ public class HuoBiContractService {
 
     public static void main(String[] args) {
         HuoBiContractService huoBiContractService = new HuoBiContractService();
-        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.MIN15, 130);
+        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.MIN15, 130);
     }
 }

@@ -6,14 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import top.alphaship.trade.huobi.HuoBiContractService;
-import top.alphaship.trade.huobi.HuoBiMarketService;
+import top.alphaship.trade.huobi.HuoBiSpotService;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
 public class HuoBiJob {
 
     @Autowired
-    private HuoBiMarketService huoBiMarketService;
+    private HuoBiSpotService huoBiSpotService;
     @Autowired
     private HuoBiContractService huoBiContractService;
 
@@ -22,7 +25,9 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 */1 * * * *")
     public void processByPerMinute() {
-        log.info("1分钟的");
+        //火币合约监控
+        List<String> contracts = Arrays.asList("BTC-USDT", "ETH-USDT", "ADA-USDT");
+        huoBiContractService.monitoringSignal(contracts, CandlestickIntervalEnum.MIN1, 150);
     }
 
 
@@ -32,8 +37,10 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 */15 * * * ?")
     public void processByFifteenMinute() {
-        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.MIN15, 130);
-        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.MIN15, 130);
+        //火币现货监控
+        huoBiSpotService.monitoringSignal(CandlestickIntervalEnum.MIN15, 150);
+        //火币合约监控
+        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.MIN15, 150);
     }
 
 
@@ -42,8 +49,10 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 */1 * * ?")
     public void processByOneHour() {
-        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.MIN60, 130);
-        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.MIN60, 130);
+        //火币现货监控
+        huoBiSpotService.monitoringSignal(CandlestickIntervalEnum.MIN60, 150);
+        //火币合约监控
+        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.MIN60, 150);
     }
 
 
@@ -52,8 +61,10 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 */4 * * ?")
     public void processByFourHour() {
-        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.HOUR4, 130);
-        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.HOUR4, 130);
+        //火币现货监控
+        huoBiSpotService.monitoringSignal(CandlestickIntervalEnum.HOUR4, 150);
+        //火币合约监控
+        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.HOUR4, 150);
     }
 
 
@@ -62,8 +73,8 @@ public class HuoBiJob {
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void processByOneDay() {
-        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.DAY1, 130);
-        huoBiContractService.monitorShortSignal(CandlestickIntervalEnum.DAY1, 130);
+        //火币现货监控
+        huoBiSpotService.monitoringSignal(CandlestickIntervalEnum.DAY1, 150);
     }
 
 

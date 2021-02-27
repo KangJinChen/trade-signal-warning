@@ -15,9 +15,9 @@ import top.alphaship.trade.bot.BasicTemplate;
 import top.alphaship.trade.bot.DingDingHelper;
 import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
+import top.alphaship.trade.helper.WarningHelper;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class HuoBiMarketService {
+public class HuoBiSpotService {
 
     /**
      * 获取现货K线
@@ -58,64 +58,11 @@ public class HuoBiMarketService {
     }
 
     /**
-     * 计算平均移动均线
-     * @param candlesticks
-     * @return
-     */
-    public BigDecimal calcSma(List<Candlestick> candlesticks) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (Candlestick candlestick : candlesticks) {
-            sum = sum.add(candlestick.getClose());
-        }
-        BigDecimal smaValue = sum.divide(BigDecimal.valueOf(candlesticks.size()), RoundingMode.HALF_DOWN);
-        log.info("sma: {}", smaValue);
-        return smaValue;
-    }
-
-    /**
-     * 上穿sma
-     * @param candlesticks
-     * @return
-     */
-    public boolean crossover(List<Candlestick> candlesticks) {
-        BigDecimal latestClose = candlesticks.get(0).getClose();
-        BigDecimal previewOpen = candlesticks.get(1).getOpen();
-        BigDecimal previewClose = candlesticks.get(1).getClose();
-
-        BigDecimal sma = calcSma(candlesticks);
-
-        if ((previewOpen.compareTo(sma) < 0 && previewClose.compareTo(sma) > 0) && latestClose.compareTo(sma) > 0) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 下穿sma
-     * @param candlesticks
-     * @return
-     */
-    public boolean crossunder(List<Candlestick> candlesticks) {
-
-        BigDecimal latestClose = candlesticks.get(0).getClose();
-        BigDecimal previewOpen = candlesticks.get(1).getOpen();
-        BigDecimal previewClose = candlesticks.get(1).getClose();
-
-        BigDecimal sma = calcSma(candlesticks);
-
-        if ((previewOpen.compareTo(sma) > 0 && previewClose.compareTo(sma) < 0) && latestClose.compareTo(sma) < 0) {
-            return true;
-        }
-        return false;
-    }
-
-
-    /**
      * 监控所有现货交易对
      * @param interval
      * @param size
      */
-    public void monitorAllPairOfSpot(CandlestickIntervalEnum interval, int size) {
+    public void monitoringSignal(CandlestickIntervalEnum interval, int size) {
         List<Symbol> symbols = getSymbolOfSpot();
         for (Symbol symbol: symbols) {
             try {
@@ -126,23 +73,16 @@ public class HuoBiMarketService {
                 basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
                 basicTemplate.setPair(symbol.getSymbol());
                 basicTemplate.setCycleTime(interval.getCode());
-                basicTemplate.setType("现货");
 
-                if (crossover(candlesticks)) {
+                List<BigDecimal> prices = candlesticks.stream().map(Candlestick::getClose).collect(Collectors.toList());
+
+                if (WarningHelper.MacdWarning(prices) == 1) {
                     //买入
-                    log.info("{} 买入", symbol.getSymbol());
-                    basicTemplate.setDirection(DirectionConstant.BUY.getText());
+                    log.info("{} 看涨", symbol.getSymbol());
+                    basicTemplate.setDirection(DirectionConstant.LONG.getText());
                     //发送钉钉
                     DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
                 }
-                /*if (crossunder(candlesticks)) {
-                    //卖出
-                    log.info("{} 卖出", symbol.getSymbol());
-                    basicTemplate.setDirection(DirectionConstant.SELL.getText());
-                    //发送钉钉
-                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null);
-                }*/
-
 
             } catch (Exception e) {
                 log.error("{} 获取K线失败", e.getMessage());
@@ -153,8 +93,8 @@ public class HuoBiMarketService {
 
 
     public static void main(String[] args) {
-        HuoBiMarketService huoBiMarketService = new HuoBiMarketService();
-        huoBiMarketService.monitorAllPairOfSpot(CandlestickIntervalEnum.MIN15, 130);
+        HuoBiSpotService huoBiSpotService = new HuoBiSpotService();
+        huoBiSpotService.monitoringSignal(CandlestickIntervalEnum.MIN15, 130);
     }
 
 }

@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.alphaship.trade.bot.BasicTemplate;
 import top.alphaship.trade.bot.DingDingHelper;
+import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
 
 import java.math.BigDecimal;
@@ -132,7 +133,7 @@ public class HuoBiMarketService {
                     log.info("{} 买入", symbol.getSymbol());
                     basicTemplate.setDirection(DirectionConstant.BUY.getText());
                     //发送钉钉
-                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null);
+                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
                 }
                 /*if (crossunder(candlesticks)) {
                     //卖出

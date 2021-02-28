@@ -19,7 +19,7 @@ public class SMA {
         BigDecimal priceSum = sumList.stream().reduce(BigDecimal::add).get();
         this.smaPrice = priceSum.divide(BigDecimal.valueOf(length), 8, RoundingMode.DOWN);
         this.length = length;
-        log.info("EMA{}: {}", this.length, this.smaPrice);
+//        log.info("EMA{}: {}", this.length, this.smaPrice);
     }
 
 }

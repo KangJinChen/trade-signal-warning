@@ -20,7 +20,7 @@ public class EMA {
         BigDecimal alpha = BigDecimal.valueOf(2).divide(BigDecimal.valueOf(length + 1), 8, RoundingMode.DOWN);
         this.emaPrice = alpha.multiply(latestPrice.subtract(sma.getSmaPrice())).add(sma.getSmaPrice());
         this.length = length;
-        log.info("EMA{}: {}", this.length, this.emaPrice);
+//        log.info("EMA{}: {}", this.length, this.emaPrice);
     }
 
 }

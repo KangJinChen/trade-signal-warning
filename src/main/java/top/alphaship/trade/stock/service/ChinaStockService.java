@@ -90,7 +90,7 @@ public class ChinaStockService {
 
         List<StockKlineEntity> list = new ArrayList<>();
         StockKlineEntity stockKlineEntity;
-        for (int i = 0; i < klines.size(); i++) {
+        for (int i = klines.size() - 1; i >= 0; i--) {
             String[] kline = klines.getString(i).split(",");
             stockKlineEntity = new StockKlineEntity();
             stockKlineEntity.setDate(kline[0]);
@@ -118,13 +118,14 @@ public class ChinaStockService {
                 List<BigDecimal> prices = stockKLine.stream().map(StockKlineEntity::getClose).collect(Collectors.toList());
 
                 //消息模板
+                String exchangeTab = stock.getCategory() == 0 ? "sz" : "sh";
                 BasicTemplate basicTemplate = new BasicTemplate();
                 basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
-                basicTemplate.setPair(stock.getSymbol() + " (" + stock.getName() + ")");
-                basicTemplate.setCycleTime(period.getCode().toString());
+                basicTemplate.setPair(exchangeTab + stock.getSymbol() + " (" + stock.getName() + ")");
+                basicTemplate.setCycleTime(period.getText());
                 basicTemplate.setCurrentPrice(prices.get(0));
 
-                if (prices.size() > 35) {
+                if (prices.size() >= 35) {
                     if (WarningHelper.MacdWarning(prices) == 1) {
                         //看涨
                         log.info("股票：{} 看涨", stock.getSymbol());
@@ -134,7 +135,7 @@ public class ChinaStockService {
                     }
                 }
             } catch (Exception e) {
-                log.error(e.getMessage());
+                e.printStackTrace();
                 DingDingHelper.sendTextMessage(e.getMessage(), false, null, BotType.STOCK);
             }
         }
@@ -145,7 +146,13 @@ public class ChinaStockService {
 
     public static void main(String[] args) {
         ChinaStockService chinaStockService = new ChinaStockService();
-        chinaStockService.monitoringSignal(StockPeriodEnum.MIN60);
+
+        StockEntity stockEntity = new StockEntity();
+        stockEntity.setSymbol("002488");
+        stockEntity.setCategory(0);
+        stockEntity.setName("金固股份");
+        List<StockEntity> stockEntityList = Arrays.asList(stockEntity);
+        chinaStockService.monitoringSignal(stockEntityList, StockPeriodEnum.MIN60);
     }
 
 }

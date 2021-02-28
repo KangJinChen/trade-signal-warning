@@ -1,6 +1,5 @@
 package top.alphaship.trade.constant;
 
-import lombok.Data;
 import lombok.Getter;
 
 @Getter
@@ -11,7 +10,9 @@ public enum BotType {
     CONTRACT("contract",
             "https://oapi.dingtalk.com/robot/send?access_token=38bbd2bacfb4acaaa8296afa3f30d5a154a8594b64a93f26ea3a534d92cc28d7",
             "SECcbcd136e4757a598b62a6d6f4e72cb08fa79a22a6061774db8e0af10bb956b70"),
-    A_SHARE("a_shares", "", "")
+    STOCK("stock",
+            "https://oapi.dingtalk.com/robot/send?access_token=227e87180a33c11d219a4003fa1963da7cc7ba6206d6ecd23102aed670b13ff3",
+            "SECc314484631179a895a673e67032bbac07d5a53c74aa6866a722518f5204b65b4")
     ;
 
 

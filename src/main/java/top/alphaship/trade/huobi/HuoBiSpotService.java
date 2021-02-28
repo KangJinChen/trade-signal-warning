@@ -67,14 +67,14 @@ public class HuoBiSpotService {
         for (Symbol symbol: symbols) {
             try {
                 List<Candlestick> candlesticks = getKlineOfSpot(symbol.getSymbol(), interval, size + 1);
+                List<BigDecimal> prices = candlesticks.stream().map(Candlestick::getClose).collect(Collectors.toList());
 
                 //消息模板
                 BasicTemplate basicTemplate = new BasicTemplate();
                 basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
                 basicTemplate.setPair(symbol.getSymbol());
                 basicTemplate.setCycleTime(interval.getCode());
-
-                List<BigDecimal> prices = candlesticks.stream().map(Candlestick::getClose).collect(Collectors.toList());
+                basicTemplate.setCurrentPrice(prices.get(0));
 
                 if (WarningHelper.MacdWarning(prices) == 1) {
                     //买入

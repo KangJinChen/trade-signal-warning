@@ -25,13 +25,15 @@ public class WarningHelper {
 
         //涨信号
         if (currentMacd.getHist().compareTo(BigDecimal.ZERO) >= 0
-                && previaMacd.getHist().compareTo(BigDecimal.ZERO) <= 0) {
+                && previaMacd.getHist().compareTo(BigDecimal.ZERO) <= 0
+                && prices.get(0).compareTo(prices.get(1)) > 0) {
             return 1;
         }
 
         //跌信号
         if (currentMacd.getHist().compareTo(BigDecimal.ZERO) <= 0
-                && previaMacd.getHist().compareTo(BigDecimal.ZERO) >= 0) {
+                && previaMacd.getHist().compareTo(BigDecimal.ZERO) >= 0
+                && prices.get(0).compareTo(prices.get(1)) < 0) {
             return 2;
         }
 

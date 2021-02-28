@@ -60,13 +60,13 @@ public class HuoBiContractService {
     public void monitoringSignal(List<String> contracts, CandlestickIntervalEnum period, int size) {
         for (String contractCode: contracts) {
             List<SwapMarketHistoryKlineResponse.DataBean> kLines = getKLine(contractCode, period, size);
+            List<BigDecimal> prices = kLines.stream().map(SwapMarketHistoryKlineResponse.DataBean::getClose).collect(Collectors.toList());
             //消息模板
             BasicTemplate basicTemplate = new BasicTemplate();
             basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
             basicTemplate.setPair(contractCode);
             basicTemplate.setCycleTime(period.getCode());
-
-            List<BigDecimal> prices = kLines.stream().map(SwapMarketHistoryKlineResponse.DataBean::getClose).collect(Collectors.toList());
+            basicTemplate.setCurrentPrice(prices.get(0));
 
             if (WarningHelper.MacdWarning(prices) == 1) {
                 //做多

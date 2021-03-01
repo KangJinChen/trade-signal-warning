@@ -118,10 +118,10 @@ public class ChinaStockService {
                 List<BigDecimal> prices = stockKLine.stream().map(StockKlineEntity::getClose).collect(Collectors.toList());
 
                 //消息模板
-                String exchangeTab = stock.getCategory() == 0 ? "sz" : "sh";
+                String exchangeTab = stock.getCategory() == 0 ? "SZ" : "SH";
                 BasicTemplate basicTemplate = new BasicTemplate();
                 basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
-                basicTemplate.setPair(exchangeTab + stock.getSymbol() + " (" + stock.getName() + ")");
+                basicTemplate.setPair(stock.getSymbol() + " (" + exchangeTab + " " + stock.getName() + ")");
                 basicTemplate.setCycleTime(period.getText());
                 basicTemplate.setCurrentPrice(prices.get(0));
 
@@ -147,12 +147,12 @@ public class ChinaStockService {
     public static void main(String[] args) {
         ChinaStockService chinaStockService = new ChinaStockService();
 
-        StockEntity stockEntity = new StockEntity();
+        /*StockEntity stockEntity = new StockEntity();
         stockEntity.setSymbol("002488");
         stockEntity.setCategory(0);
         stockEntity.setName("金固股份");
-        List<StockEntity> stockEntityList = Arrays.asList(stockEntity);
-        chinaStockService.monitoringSignal(stockEntityList, StockPeriodEnum.MIN60);
+        List<StockEntity> stockEntityList = Arrays.asList(stockEntity);*/
+        chinaStockService.monitoringSignal(StockPeriodEnum.MIN15);
     }
 
 }

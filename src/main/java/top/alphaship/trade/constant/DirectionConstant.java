@@ -4,12 +4,14 @@ import lombok.Getter;
 
 @Getter
 public enum DirectionConstant {
-    LONG("看涨"),
-    SHORT("看跌");
+    LONG(1, "看涨"),
+    SHORT(2, "看跌");
 
+    private final Integer code;
     private final String text;
 
-    DirectionConstant(String text) {
+    DirectionConstant(Integer code, String text) {
+        this.code = code;
         this.text = text;
     }
 }

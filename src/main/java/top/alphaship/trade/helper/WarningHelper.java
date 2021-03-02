@@ -1,5 +1,6 @@
 package top.alphaship.trade.helper;
 
+import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.indicator.MACD;
 
 import java.math.BigDecimal;
@@ -27,16 +28,15 @@ public class WarningHelper {
         if (currentMacd.getHist().compareTo(BigDecimal.ZERO) >= 0
                 && previaMacd.getHist().compareTo(BigDecimal.ZERO) <= 0
                 && prices.get(0).compareTo(prices.get(1)) > 0) {
-            return 1;
+            return DirectionConstant.LONG.getCode();
         }
 
         //跌信号
         if (currentMacd.getHist().compareTo(BigDecimal.ZERO) <= 0
                 && previaMacd.getHist().compareTo(BigDecimal.ZERO) >= 0
                 && prices.get(0).compareTo(prices.get(1)) < 0) {
-            return 2;
+            return DirectionConstant.SHORT.getCode();
         }
-
         return -1;
     }
 

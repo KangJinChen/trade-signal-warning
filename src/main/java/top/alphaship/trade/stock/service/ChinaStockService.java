@@ -13,6 +13,7 @@ import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.constant.StockPeriodEnum;
 import top.alphaship.trade.helper.WarningHelper;
+import top.alphaship.trade.indicator.EMA;
 import top.alphaship.trade.stock.entity.StockEntity;
 import top.alphaship.trade.stock.entity.StockKlineEntity;
 
@@ -126,7 +127,8 @@ public class ChinaStockService {
                 basicTemplate.setCurrentPrice(prices.get(0));
 
                 if (prices.size() >= 35) {
-                    if (WarningHelper.MacdWarning(prices) == 1) {
+                    if (WarningHelper.MacdWarning(prices) == DirectionConstant.LONG.getCode()
+                            && prices.get(0).compareTo(new EMA(prices,150).getEmaPrice()) > 0) {
                         //看涨
                         log.info("股票：{} 看涨", stock.getSymbol());
                         basicTemplate.setDirection(DirectionConstant.LONG.getText());

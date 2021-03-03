@@ -4,6 +4,7 @@ import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.indicator.MACD;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -39,5 +40,15 @@ public class WarningHelper {
         }
         return -1;
     }
+
+    public static boolean pinbarWarning(BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low) {
+        BigDecimal bodyLength = open.compareTo(close) > 0 ? open.subtract(close) : close.subtract(open);
+        BigDecimal upperTailLength = open.compareTo(close) > 0 ? high.subtract(open) : high.subtract(close);
+        BigDecimal lowerTailLength = open.compareTo(close) > 0 ? close.subtract(low) : open.subtract(low);
+        BigDecimal oneThird = BigDecimal.valueOf(1).divide(BigDecimal.valueOf(3), 8, RoundingMode.DOWN);
+        return bodyLength.divide(upperTailLength,8, RoundingMode.DOWN).compareTo(oneThird) < 0
+                || bodyLength.divide(lowerTailLength,8, RoundingMode.DOWN).compareTo(oneThird) < 0;
+    }
+
 
 }

@@ -83,6 +83,17 @@ public class HuoBiSpotService {
                     //发送钉钉
                     DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
                 }
+                //监控PinBar
+                Candlestick newestKline = candlesticks.get(0);
+                Candlestick latestKline = candlesticks.get(1);
+                if (WarningHelper.pinbarWarning(newestKline.getOpen(), newestKline.getClose(), newestKline.getHigh(), newestKline.getLow())
+                        || WarningHelper.pinbarWarning(latestKline.getOpen(), latestKline.getClose(), latestKline.getHigh(), latestKline.getLow())) {
+                    log.info("{} 出现PinBar", symbol.getSymbol());
+                    basicTemplate.setDirection("出现PinBar");
+                    //发送钉钉
+                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
+                }
+
 
             } catch (Exception e) {
                 log.error("{} 获取K线失败", e.getMessage());

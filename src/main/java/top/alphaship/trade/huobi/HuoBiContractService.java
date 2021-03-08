@@ -16,6 +16,7 @@ import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.helper.WarningHelper;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,7 +47,8 @@ public class HuoBiContractService {
                 .size(size)
                 .build();
         SwapMarketHistoryKlineResponse response = marketAPIService.getSwapMarketHistoryKline(request);
-        return response.getData();
+        List<SwapMarketHistoryKlineResponse.DataBean> dataBeanList = response.getData();
+        return dataBeanList.stream().sorted(Comparator.comparing(SwapMarketHistoryKlineResponse.DataBean::getId).reversed()).collect(Collectors.toList());
     }
 
 
@@ -88,6 +90,6 @@ public class HuoBiContractService {
 
     public static void main(String[] args) {
         HuoBiContractService huoBiContractService = new HuoBiContractService();
-        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.MIN15, 130);
+        huoBiContractService.monitoringSignal(CandlestickIntervalEnum.MIN1, 130);
     }
 }

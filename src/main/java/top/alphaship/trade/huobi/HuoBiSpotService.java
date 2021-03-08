@@ -30,6 +30,15 @@ import java.util.stream.Collectors;
 @Component
 public class HuoBiSpotService {
 
+    private final MarketClient marketClient;
+    private final GenericClient genericService;
+
+    public HuoBiSpotService() {
+        HuobiOptions huobiOptions = HuobiOptions.builder().restHost("https://api.huobi.pro").build();
+        marketClient = MarketClient.create(huobiOptions);
+        genericService = GenericClient.create(huobiOptions);
+    }
+
     /**
      * 获取现货K线
      * @param symbol
@@ -37,7 +46,6 @@ public class HuoBiSpotService {
      * @param size
      */
     public List<Candlestick> getKlineOfSpot(String symbol, CandlestickIntervalEnum interval, int size) {
-        MarketClient marketClient = MarketClient.create(new HuobiOptions());
         CandlestickRequest request = CandlestickRequest.builder().symbol(symbol).interval(interval).size(size).build();
         List<Candlestick> list = marketClient.getCandlestick(request);
         log.info("kline.size: {}", list.size());
@@ -48,7 +56,6 @@ public class HuoBiSpotService {
      * 获取所有现货交易对
      */
     public List<Symbol> getSymbolOfSpot() {
-        GenericClient genericService = GenericClient.create(new HuobiOptions());
         List<Symbol> symbols = genericService.getSymbols();
         List<Symbol> symbolsOfUsdt = symbols.stream()
                 .filter(item -> "usdt".equals(item.getQuoteCurrency()) && !item.getBaseCurrency().contains("3s"))
@@ -84,10 +91,8 @@ public class HuoBiSpotService {
                     DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
                 }
                 //监控PinBar
-                Candlestick newestKline = candlesticks.get(0);
                 Candlestick latestKline = candlesticks.get(1);
-                if (WarningHelper.pinbarWarning(newestKline.getOpen(), newestKline.getClose(), newestKline.getHigh(), newestKline.getLow())
-                        || WarningHelper.pinbarWarning(latestKline.getOpen(), latestKline.getClose(), latestKline.getHigh(), latestKline.getLow())) {
+                if (WarningHelper.pinbarWarning(latestKline.getOpen(), latestKline.getClose(), latestKline.getHigh(), latestKline.getLow())) {
                     log.info("{} 出现PinBar", symbol.getSymbol());
                     basicTemplate.setDirection("出现PinBar");
                     //发送钉钉

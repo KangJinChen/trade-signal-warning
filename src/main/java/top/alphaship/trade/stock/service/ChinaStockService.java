@@ -14,6 +14,7 @@ import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.constant.StockPeriodEnum;
 import top.alphaship.trade.helper.WarningHelper;
 import top.alphaship.trade.indicator.EMA;
+import top.alphaship.trade.indicator.SMA;
 import top.alphaship.trade.stock.entity.StockEntity;
 import top.alphaship.trade.stock.entity.StockKlineEntity;
 
@@ -106,13 +107,18 @@ public class ChinaStockService {
     }
 
 
-    public void monitoringSignal(StockPeriodEnum period) {
+    public Map<String, List<StockEntity>> monitoringSignal(StockPeriodEnum period) {
         List<StockEntity> stockList = getStockList();
-        monitoringSignal(stockList, period);
+        List<StockEntity> longStockList = monitoringSignal(stockList, period);
 
+        Map<String, List<StockEntity>> result = new HashMap<>();
+        result.put("longStockList", longStockList);
+
+        return result;
     }
 
-    public void monitoringSignal(List<StockEntity> stockList, StockPeriodEnum period) {
+    public List<StockEntity> monitoringSignal(List<StockEntity> stockList, StockPeriodEnum period) {
+        List<StockEntity> longStockList = new ArrayList<>();
         for (StockEntity stock: stockList) {
             try {
                 List<StockKlineEntity> stockKLine = getStockKLine(stock, period);
@@ -127,8 +133,8 @@ public class ChinaStockService {
                 basicTemplate.setCurrentPrice(prices.get(0));
 
                 if (prices.size() >= 35) {
-                    if (WarningHelper.MacdWarning(prices) == DirectionConstant.LONG.getCode()
-                            && prices.get(0).compareTo(new EMA(prices,150).getEmaPrice()) > 0) {
+                    if (prices.get(0).compareTo(new EMA(prices,120).getEmaPrice()) > 0) {
+                        longStockList.add(stock);
                         //看涨
                         log.info("股票：{} 看涨", stock.getSymbol());
                         basicTemplate.setDirection(DirectionConstant.LONG.getText());
@@ -142,6 +148,7 @@ public class ChinaStockService {
             }
         }
         log.info("end.....");
+        return longStockList;
 
     }
 
@@ -154,7 +161,11 @@ public class ChinaStockService {
         stockEntity.setCategory(0);
         stockEntity.setName("金固股份");
         List<StockEntity> stockEntityList = Arrays.asList(stockEntity);*/
-        chinaStockService.monitoringSignal(StockPeriodEnum.MIN15);
+        Map<String, List<StockEntity>> stockListOfMin15 = chinaStockService.monitoringSignal(StockPeriodEnum.DAY1);
+//        List<StockEntity> longStockList = stockListOfMin15.get("longStockList");
+//        List<StockEntity> stockListOfMin30 = chinaStockService.monitoringSignal(longStockList, StockPeriodEnum.MIN30);
+//        stockListOfMin30.forEach(item -> System.out.println(item.getSymbol() + ": " + item.getName()));
+
     }
 
 }

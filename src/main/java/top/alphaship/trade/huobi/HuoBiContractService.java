@@ -14,11 +14,14 @@ import top.alphaship.trade.bot.DingDingHelper;
 import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.helper.WarningHelper;
+import top.alphaship.trade.indicator.EMA;
+import top.alphaship.trade.util.IndicatorUtil;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -32,10 +35,10 @@ public class HuoBiContractService {
     private MarketAPIService marketAPIService = new MarketAPIServiceImpl();
 
 
-    public List<String> getAllContract() {
+    public Set<String> getAllContract() {
         SwapContractInfoResponse allContractResp = marketAPIService.getSwapContractInfo(null, "all");
         List<SwapContractInfoResponse.DataBean> data = allContractResp.getData();
-        List<String> allContractList = data.stream().map(SwapContractInfoResponse.DataBean::getContractCode).collect(Collectors.toList());
+        Set<String> allContractList = data.stream().map(SwapContractInfoResponse.DataBean::getContractCode).collect(Collectors.toSet());
         log.info("contract.size: {}, allContractList: {}", allContractList.size(), allContractList);
         return allContractList;
     }
@@ -55,11 +58,11 @@ public class HuoBiContractService {
 
 
     public void monitoringSignal(CandlestickIntervalEnum period, int size) {
-        List<String> allContract = getAllContract();
+        Set<String> allContract = getAllContract();
         monitoringSignal(allContract, period, size);
     }
 
-    public void monitoringSignal(List<String> contracts, CandlestickIntervalEnum period, int size) {
+    public void monitoringSignal(Set<String> contracts, CandlestickIntervalEnum period, int size) {
         for (String contractCode: contracts) {
             List<SwapMarketHistoryKlineResponse.DataBean> kLines = getKLine(contractCode, period, size);
             List<BigDecimal> prices = kLines.stream().map(SwapMarketHistoryKlineResponse.DataBean::getClose).collect(Collectors.toList());
@@ -70,7 +73,27 @@ public class HuoBiContractService {
             basicTemplate.setCycleTime(period.getCode());
             basicTemplate.setCurrentPrice(prices.get(0));
 
-            if (WarningHelper.MacdWarning(prices) == 1) {
+            //上穿ema150均线做多
+            SwapMarketHistoryKlineResponse.DataBean newestKline = kLines.get(0);
+            BigDecimal ema150 = new EMA(prices, 150).getEmaPrice();
+            if (IndicatorUtil.crossOver(newestKline.getClose(), ema150, newestKline.getLow())) {
+                //做多
+                log.info("合约：{} 看涨", contractCode);
+                basicTemplate.setDirection(DirectionConstant.LONG.getText());
+                //发送钉钉
+                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.CONTRACT);
+            }
+            //下穿ema150均线做空
+            if (IndicatorUtil.crossDown(newestKline.getHigh(), ema150, newestKline.getClose())) {
+                //做空
+                log.info("合约：{} 看跌", contractCode);
+                basicTemplate.setDirection(DirectionConstant.SHORT.getText());
+                //发送钉钉
+                DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.CONTRACT);
+            }
+
+
+            /*if (WarningHelper.MacdWarning(prices) == 1) {
                 //做多
                 log.info("合约：{} 看涨", contractCode);
                 basicTemplate.setDirection(DirectionConstant.LONG.getText());
@@ -84,7 +107,7 @@ public class HuoBiContractService {
                 //发送钉钉
                 DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.CONTRACT);
 
-            }
+            }*/
         }
     }
 

@@ -2,6 +2,7 @@ package top.alphaship.trade.huobi;
 
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
+import com.huobi.api.response.market.SwapMarketHistoryKlineResponse;
 import com.huobi.client.GenericClient;
 import com.huobi.client.MarketClient;
 import com.huobi.client.req.market.CandlestickRequest;
@@ -16,10 +17,13 @@ import top.alphaship.trade.bot.DingDingHelper;
 import top.alphaship.trade.constant.BotType;
 import top.alphaship.trade.constant.DirectionConstant;
 import top.alphaship.trade.helper.WarningHelper;
+import top.alphaship.trade.indicator.EMA;
+import top.alphaship.trade.util.IndicatorUtil;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -55,11 +59,12 @@ public class HuoBiSpotService {
     /**
      * 获取所有现货交易对
      */
-    public List<Symbol> getSymbolOfSpot() {
+    public Set<String> getSymbolOfSpot() {
         List<Symbol> symbols = genericService.getSymbols();
-        List<Symbol> symbolsOfUsdt = symbols.stream()
+        Set<String> symbolsOfUsdt = symbols.stream()
                 .filter(item -> "usdt".equals(item.getQuoteCurrency()) && !item.getBaseCurrency().contains("3s"))
-                .collect(Collectors.toList());
+                .map(Symbol::getSymbol)
+                .collect(Collectors.toSet());
         log.info("symbols.size:{}, symbols:{}", symbolsOfUsdt.size(), JSON.toJSONString(symbolsOfUsdt));
         return symbolsOfUsdt;
     }
@@ -70,20 +75,43 @@ public class HuoBiSpotService {
      * @param size
      */
     public void monitoringSignal(CandlestickIntervalEnum interval, int size) {
-        List<Symbol> symbols = getSymbolOfSpot();
-        for (Symbol symbol: symbols) {
+        Set<String> symbols = getSymbolOfSpot();
+        monitoringSignal(symbols, interval, size);
+    }
+
+    public void monitoringSignal(Set<String> symbols, CandlestickIntervalEnum interval, int size) {
+        for (String symbol: symbols) {
             try {
-                List<Candlestick> candlesticks = getKlineOfSpot(symbol.getSymbol(), interval, size + 1);
+                List<Candlestick> candlesticks = getKlineOfSpot(symbol, interval, size + 1);
                 List<BigDecimal> prices = candlesticks.stream().map(Candlestick::getClose).collect(Collectors.toList());
 
                 //消息模板
                 BasicTemplate basicTemplate = new BasicTemplate();
                 basicTemplate.setWarningTime(DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
-                basicTemplate.setPair(symbol.getSymbol());
+                basicTemplate.setPair(symbol);
                 basicTemplate.setCycleTime(interval.getCode());
                 basicTemplate.setCurrentPrice(prices.get(0));
 
-                if (WarningHelper.MacdWarning(prices) == 1) {
+                //上穿ema150均线做多
+                Candlestick newestKline = candlesticks.get(0);
+                BigDecimal ema150 = new EMA(prices, 150).getEmaPrice();
+                if (IndicatorUtil.crossOver(newestKline.getClose(), ema150, newestKline.getLow())) {
+                    //做多
+                    log.info("现货：{} 看涨", symbol);
+                    basicTemplate.setDirection(DirectionConstant.LONG.getText());
+                    //发送钉钉
+                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
+                }
+                //下穿ema150均线做空
+                if (IndicatorUtil.crossDown(newestKline.getHigh(), ema150, newestKline.getClose())) {
+                    //做空
+                    log.info("现货：{} 看跌", symbol);
+                    basicTemplate.setDirection(DirectionConstant.SHORT.getText());
+                    //发送钉钉
+                    DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
+                }
+
+                /*if (WarningHelper.MacdWarning(prices) == 1) {
                     //买入
                     log.info("{} 看涨", symbol.getSymbol());
                     basicTemplate.setDirection(DirectionConstant.LONG.getText());
@@ -97,14 +125,13 @@ public class HuoBiSpotService {
                     basicTemplate.setDirection("出现PinBar");
                     //发送钉钉
                     DingDingHelper.sendMarkdownMessage("信号预警", basicTemplate.toString(), false, null, BotType.SPOT);
-                }
+                }*/
 
 
             } catch (Exception e) {
                 log.error("{} 获取K线失败", e.getMessage());
             }
         }
-
     }
 
 

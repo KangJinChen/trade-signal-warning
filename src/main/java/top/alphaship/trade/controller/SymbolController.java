@@ -5,10 +5,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import top.alphaship.trade.data.SymbolData;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/symbol")
@@ -18,9 +15,7 @@ public class SymbolController {
     @ResponseBody
     public Set<String> setContractSymbol(String symbol) {
         String[] list = symbol.split(",");
-        for (int i = 0; i < list.length; i++) {
-            SymbolData.contractSymbols.add(symbol);
-        }
+        SymbolData.contractSymbols.addAll(Arrays.asList(list));
         return SymbolData.contractSymbols;
     }
 
@@ -28,9 +23,7 @@ public class SymbolController {
     @ResponseBody
     public Set<String> setSpotSymbol(String symbol) {
         String[] list = symbol.split(",");
-        for (int i = 0; i < list.length; i++) {
-            SymbolData.spotSymbols.add(symbol);
-        }
+        SymbolData.spotSymbols.addAll(Arrays.asList(list));
         return SymbolData.spotSymbols;
     }
 
@@ -41,5 +34,13 @@ public class SymbolController {
         result.put("contractSymbols", SymbolData.contractSymbols);
         result.put("spotSymbols", SymbolData.spotSymbols);
         return result;
+    }
+
+    @RequestMapping("/clearAllSymbol")
+    @ResponseBody
+    public String clearAllSymbol() {
+        SymbolData.contractSymbols.clear();
+        SymbolData.spotSymbols.clear();
+        return "success";
     }
 }
